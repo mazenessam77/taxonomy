@@ -2,13 +2,14 @@
 # Stage 1: Install dependencies
 # ============================================
 FROM node:18-alpine AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat && \
+    corepack enable && corepack prepare pnpm@8.15.9 --activate
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
-RUN corepack enable pnpm && pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # ============================================
 # Stage 2: Build the application
@@ -30,7 +31,7 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate Prisma client and build contentlayer + Next.js
-RUN corepack enable pnpm && \
+RUN corepack enable && corepack prepare pnpm@8.15.9 --activate && \
     npx prisma generate && \
     pnpm build
 
