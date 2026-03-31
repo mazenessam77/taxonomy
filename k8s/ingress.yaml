@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: taxonomy-ingress
+  namespace: taxonomy
+  annotations:
+    # ── AWS Load Balancer Controller annotations ──
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    # TODO: Create ACM certificate and replace this ARN
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:541405370428:certificate/PENDING
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    # Group multiple ingresses under one ALB (cost optimization)
+    alb.ingress.kubernetes.io/group.name: taxonomy
+    alb.ingress.kubernetes.io/group.order: "100"
+  labels:
+    app: taxonomy
+spec:
+  ingressClassName: alb
+  rules:
+    - host: taxonomy.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: taxonomy-service
+                port:
+                  number: 80
